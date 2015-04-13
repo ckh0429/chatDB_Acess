@@ -2,6 +2,13 @@
 <items version="2" >
 
     <item
+        jar="C:\Users\1503002\Documents\GitHub\SQLite-Database-Example1\chatDB_Acess\app\build\intermediates\exploded-aar\com.google.android.gms\play-services\3.1.59\classes.jar"
+        jumboMode="false"
+        revision="21.1.2"
+        sha1="2dd7b1a9ea65bb03d9cd16df777eeaf537a1fc81">
+        <dex dex="C:\Users\1503002\Documents\GitHub\SQLite-Database-Example1\chatDB_Acess\app\build\intermediates\pre-dexed\debug\classes-1577d61174aaf8af5296c160ee711a0686c58200.jar" />
+    </item>
+    <item
         jar="C:\Users\1503002\AppData\Local\Android\sdk\extras\android\m2repository\com\android\support\support-v4\18.0.0\support-v4-18.0.0.jar"
         jumboMode="false"
         revision="21.1.2"

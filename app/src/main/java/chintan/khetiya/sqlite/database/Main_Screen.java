@@ -1,12 +1,21 @@
 package chintan.khetiya.sqlite.database;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,6 +28,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,29 +39,47 @@ import chintan.khetiya.sqlite.cursor.R;
 
 public class Main_Screen extends Activity {
     Button add_btn;
-    Button add_myTable,update_myTable,deleteMyTable;
-    Button add_ContactTable,update_ContactTable,deleteContactTable;
+    Button add_myTable, update_myTable, deleteMyTable;
+    Button add_ContactTable, update_ContactTable, deleteContactTable;
     ListView Contact_listview;
     ArrayList<Contact> contact_data = new ArrayList<Contact>();
     Contact_Adapter cAdapter;
     DatabaseHandler db;
     String Toast_msg;
 
+    TextView mDisplay;
+
+    Context context;
+
+    String regid;
+
+
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+        //GCM
+        context = getApplicationContext();
+
+        // Check device for Play Services APK. If check succeeds, proceed with
+
+
+        //GCM
+
+
         final DatabaseHandler dbHandler = new DatabaseHandler(this);
         try {
             Contact_listview = (ListView) findViewById(R.id.list);
             Contact_listview.setItemsCanFocus(false);
             add_btn = (Button) findViewById(R.id.add_btn);
             add_myTable = (Button) findViewById(R.id.button);
-            update_myTable= (Button) findViewById(R.id.button2);
+            update_myTable = (Button) findViewById(R.id.button2);
             deleteMyTable = (Button) findViewById(R.id.button3);
-            add_ContactTable= (Button) findViewById(R.id.button4);
-            update_ContactTable= (Button) findViewById(R.id.button5);
-            deleteContactTable= (Button) findViewById(R.id.button6);
+            add_ContactTable = (Button) findViewById(R.id.button4);
+            update_ContactTable = (Button) findViewById(R.id.button5);
+            deleteContactTable = (Button) findViewById(R.id.button6);
             Set_Referash_Data();
 
         } catch (Exception e) {
@@ -59,34 +90,34 @@ public class Main_Screen extends Activity {
 
             @Override
             public void onClick(View v) {
-                    try {
-                        Log.i("KH","addMyTable");
-                        dbHandler.insertMyTable(getBaseContext(), createUserTableTestJson(false));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    Log.i("KH", "addMyTable");
+                    dbHandler.insertMyTable(getBaseContext(), createUserTableTestJson(false));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
         update_myTable.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                    try {
-                        Log.i("KH","updateMyTable");
-                        int i = dbHandler.updateMyTable(getBaseContext(), "457371",createUserTableTestJson(true));
-                        Log.i("KH update result",i+"");
-                        dbHandler.close();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    Log.i("KH", "updateMyTable");
+                    int i = dbHandler.updateMyTable(getBaseContext(), "457371", createUserTableTestJson(true));
+                    Log.i("KH update result", i + "");
+                    dbHandler.close();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
         deleteMyTable.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                    Log.i("KH","deleteMyTable");
-                    dbHandler.deleteMyTable(getBaseContext(), "4428");
+                Log.i("KH", "deleteMyTable");
+                dbHandler.deleteMyTable(getBaseContext(), "4428");
             }
         });
         add_ContactTable.setOnClickListener(new View.OnClickListener() {
@@ -94,7 +125,7 @@ public class Main_Screen extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-                    Log.i("KH","add_ContactTable");
+                    Log.i("KH", "add_ContactTable");
                     dbHandler.insertContactTable(getBaseContext(), createContactTableTestJson(false));
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -106,8 +137,8 @@ public class Main_Screen extends Activity {
             @Override
             public void onClick(View v) {
                 try {
-                    Log.i("KH","update_ContactTable");
-                    dbHandler.updateContactTable(getBaseContext(), "206321",createContactTableTestJson(true));
+                    Log.i("KH", "update_ContactTable");
+                    dbHandler.updateContactTable(getBaseContext(), "206321", createContactTableTestJson(true));
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -117,15 +148,18 @@ public class Main_Screen extends Activity {
 
             @Override
             public void onClick(View v) {
-                    Log.i("KH","deleteContactTable");
-                    dbHandler.deleteContactTable(getBaseContext(), "206321");
+                Log.i("GcmIntentService", "deleteContactTable");
+                dbHandler.deleteContactTable(getBaseContext(), "206321");
             }
         });
     }
+
+
+
     public JSONObject createContactTableTestJson(boolean isUpdate) throws JSONException {
         JSONObject insertDataJob = new JSONObject();
         if (!isUpdate)
-        insertDataJob.put(Table.CONTACT_ID, getRandomString(6));
+            insertDataJob.put(Table.CONTACT_ID, getRandomString(6));
         else
             insertDataJob.put(Table.CONTACT_ID, "5566");
         insertDataJob.put(Table.CONTACT_NAME, "KH");
@@ -141,12 +175,13 @@ public class Main_Screen extends Activity {
         insertDataJob.put(Table.LAST_CHAT_TIME, "Acer");
         return insertDataJob;
     }
+
     public JSONObject createUserTableTestJson(boolean isUpdate) throws JSONException {
         JSONObject insertDataJob = new JSONObject();
         if (!isUpdate)
-        insertDataJob.put(Table.USER_ID, getRandomString(4));
+            insertDataJob.put(Table.USER_ID, getRandomString(4));
         else
-        insertDataJob.put(Table.USER_ID, "5566");
+            insertDataJob.put(Table.USER_ID, "5566");
         insertDataJob.put(Table.USER_PW, "KH");
         insertDataJob.put(Table.USER_NAME, getRandomString(2));
         insertDataJob.put(Table.USER_MOBILE, "0933913329");
@@ -166,15 +201,17 @@ public class Main_Screen extends Activity {
 
         return insertDataJob;
     }
-    private static final String ALLOWED_CHARACTERS ="0123456789";
-    private static String getRandomString(final int sizeOfRandomString)
-    {
-        final Random random=new Random();
-        final StringBuilder sb=new StringBuilder(sizeOfRandomString);
-        for(int i=0;i<sizeOfRandomString;++i)
+
+    private static final String ALLOWED_CHARACTERS = "0123456789";
+
+    private static String getRandomString(final int sizeOfRandomString) {
+        final Random random = new Random();
+        final StringBuilder sb = new StringBuilder(sizeOfRandomString);
+        for (int i = 0; i < sizeOfRandomString; ++i)
             sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
         return sb.toString();
     }
+
     public void Call_My_Blog(View v) {
         Intent intent = new Intent(Main_Screen.this, My_Blog.class);
         startActivity(intent);
